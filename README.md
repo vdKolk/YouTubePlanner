@@ -2,6 +2,8 @@
 
 Een Windows-applicatie voor het inplannen van YouTube livestreams voor twee accounts (hoofdstream & tolkstream).
 
+![Overzicht applicatie](assets/screenshot_overview.png)
+
 ---
 
 ## Versie-informatie
@@ -85,6 +87,8 @@ Herhaal voor het tweede account.
 
 ### Stream inplannen
 
+![Stream inplannen](assets/screenshot_plan.png)
+
 1. Ga naar Stream inplannen
 2. Kies titelmodus: automatisch (predikant + schriftgedeelte) of handmatig
 3. Stel datum en begintijd in
@@ -94,6 +98,8 @@ Herhaal voor het tweede account.
 7. Klik Stream inplannen
 
 ### Archiveren
+
+![Archiveren van oude streams](assets/screenshot_archive.png)
 
 1. Ga naar Archiveren
 2. Stel het aantal dagen in (standaard 180)

@@ -174,6 +174,18 @@ class SettingsFrame(ctk.CTkFrame):
                 command=lambda k=acc_key, sd=status_dot: self._authenticate(k, sd),
             ).pack(side="left", padx=(0, 12))
 
+            ctk.CTkButton(
+                btn_row,
+                text="📋",
+                width=40,
+                height=36,
+                fg_color=COLORS["card"],
+                hover_color=COLORS["accent2"],
+                text_color=COLORS["text"],
+                font=ctk.CTkFont(size=13),
+                command=lambda k=acc_key, sd=status_dot: self._authenticate(k, sd, manual=True),
+            ).pack(side="left", padx=(0, 12))
+
             if acc.is_authenticated():
                 ctk.CTkButton(
                     btn_row,
@@ -207,19 +219,35 @@ class SettingsFrame(ctk.CTkFrame):
         messagebox.showinfo("Geïmporteerd", f"Credentials opgeslagen als:\n{dest.name}\n\nLog nu in via de knop 'Inloggen via browser'.")
         self.on_show()
 
-    def _authenticate(self, acc_key: str, status_label):
+    def _authenticate(self, acc_key: str, status_label, manual=False):
         def _do():
             try:
                 acc = self.app.youtube.get_account(acc_key)
-                acc.authenticate()
-                self.after(0, lambda: status_label.configure(text="● Verbonden", text_color=COLORS["success"]))
-                self.after(0, self.app.refresh_status)
-                self.after(0, lambda: messagebox.showinfo("Succes", f"Succesvol ingelogd voor {acc.name}!"))
-            except FileNotFoundError as e:
-                self.after(0, lambda: messagebox.showerror("Fout", str(e)))
-            except Exception as e:
-                self.after(0, lambda: messagebox.showerror("Fout", f"Inloggen mislukt:\n{e}"))
+                # Update status naar 'bezig'
+                self.after(0, lambda: status_label.configure(text="● Bezig met inloggen...", text_color=COLORS["warning"]))
+                
+                def _url_handler(url):
+                    self.after(0, lambda: [
+                        self.clipboard_clear(),
+                        self.clipboard_append(url),
+                        messagebox.showinfo(
+                            "Link gekopieerd", 
+                            "De inloglink is gekopieerd naar je klembord.\n\n"
+                            "Plak deze in de browser waar je bent ingelogd."
+                        )
+                    ])
 
+                acc.authenticate(url_callback=_url_handler if manual else None)
+                # Wacht heel even voor de zekerheid voordat we de status verversen
+                self.after(500, lambda: status_label.configure(text="● Verbonden", text_color=COLORS["success"]))
+                self.after(500, self.app.refresh_status)
+                self.after(600, lambda: messagebox.showinfo("Succes", f"Succesvol ingelogd voor {acc.name}!"))
+            except FileNotFoundError as e:
+                err_msg = str(e)
+                self.after(0, lambda: [status_label.configure(text="● Fout", text_color=COLORS["error"]), messagebox.showerror("Fout", err_msg)])
+            except Exception as e:
+                err_msg = f"Inloggen mislukt:\n{e}"
+                self.after(0, lambda: [status_label.configure(text="● Fout", text_color=COLORS["error"]), messagebox.showerror("Fout", err_msg)])
         threading.Thread(target=_do, daemon=True).start()
 
     def _logout(self, acc_key: str):

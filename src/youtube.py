@@ -53,7 +53,7 @@ class YouTubeAccount:
     def is_authenticated(self) -> bool:
         return self.token_file.exists() and self.service is not None
 
-    def authenticate(self, parent_window=None) -> bool:
+    def authenticate(self, url_callback=None) -> bool:
         """Start OAuth2 flow en sla token op. Geeft True terug bij succes."""
         if not self.credentials_file.exists():
             raise FileNotFoundError(
@@ -82,16 +82,39 @@ class YouTubeAccount:
         # Nieuw token aanmaken via browser
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
-                str(self.credentials_file), SCOPES
+                str(self.credentials_file), 
+                SCOPES
             )
-            creds = flow.run_local_server(port=0, open_browser=True)
+            
+            if url_callback:
+                # Als we een callback hebben, genereren we eerst de URL
+                # Gebruik een vaste 'state' om de (mismatching_state) CSRF error te voorkomen.
+                # Dit is nodig omdat run_local_server intern authorization_url() opnieuw aanroept.
+                import secrets
+                state = secrets.token_urlsafe(16)
+
+                flow.redirect_uri = "http://localhost:8080/"
+                auth_url, _ = flow.authorization_url(prompt='consent', state=state)
+                url_callback(auth_url)
+                
+                # Start de server met dezelfde state en prompt instellingen
+                creds = flow.run_local_server(
+                    host='localhost', 
+                    port=8080, 
+                    open_browser=False, 
+                    state=state,
+                    prompt='consent'
+                )
+            else:
+                # Standaard flow
+                creds = flow.run_local_server(port=0, open_browser=True)
 
         # Token opslaan
         with open(self.token_file, "wb") as f:
             pickle.dump(creds, f)
 
         self._credentials = creds
-        self.service = build("youtube", "v3", credentials=creds)
+        self.service = build("youtube", "v3", credentials=creds, static_discovery=False)
         return True
 
     def connect(self) -> bool:
@@ -110,7 +133,7 @@ class YouTubeAccount:
 
             if creds.valid:
                 self._credentials = creds
-                self.service = build("youtube", "v3", credentials=creds)
+                self.service = build("youtube", "v3", credentials=creds, static_discovery=False)
                 return True
         except Exception:
             pass
