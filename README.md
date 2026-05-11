@@ -7,6 +7,8 @@ Een Windows-applicatie voor het inplannen van YouTube livestreams voor twee acco
 ---
 
 ## Versie-informatie
+**Huidige versie: 1.1.0**
+
 
 | Pakket | Versie |
 |---|---|

@@ -15,7 +15,7 @@ except ImportError:
     print("CustomTkinter niet gevonden. Installeer via: pip install customtkinter")
     sys.exit(1)
 
-from src.settings import SettingsManager
+from src.settings import SettingsManager, APP_VERSION
 from src.youtube import YouTubeManager
 from src.database import BroadcastDB
 from src.frames.plan_frame import PlanFrame
@@ -149,6 +149,14 @@ class App:
             status_frame,
             self.settings.get("accounts", "tolk", "name") or "Tolkstream",
         )
+
+        # Versienummer onderaan de sidebar
+        ctk.CTkLabel(
+            self.sidebar,
+            text=f"Versie {APP_VERSION}",
+            font=ctk.CTkFont(size=10),
+            text_color=COLORS["text_muted"],
+        ).pack(side="bottom", pady=(0, 12))
 
         # Hoofdgebied
         self.main_area = ctk.CTkFrame(self.root, fg_color=COLORS["bg"], corner_radius=0)
