@@ -147,11 +147,11 @@ class ArchiveFrame(ctk.CTkFrame):
         ctk.CTkButton(
             btn_row,
             text="🔍  Zoeken naar oude streams",
-            height=44,
-            font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color=COLORS["accent2"],
-            hover_color="#1a6fa3",
-            text_color="white",
+            height=34,
+            font=ctk.CTkFont(size=13),
+            fg_color=COLORS["card"],
+            hover_color=COLORS["border"],
+            text_color=COLORS["text"],
             corner_radius=8,
             command=self._search,
         ).pack(side="left", padx=(0, 12))
@@ -159,8 +159,8 @@ class ArchiveFrame(ctk.CTkFrame):
         self.archive_btn = ctk.CTkButton(
             btn_row,
             text="🗃️  Alles verbergen",
-            height=44,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            height=34,
+            font=ctk.CTkFont(size=13),
             fg_color=COLORS["accent"],
             hover_color=COLORS["accent_hover"],
             text_color="white",
@@ -224,8 +224,8 @@ class ArchiveFrame(ctk.CTkFrame):
                 try:
                     found["main"] = acc.get_all_old_broadcasts(days)
                 except Exception as e:
-                    self.after(0, lambda: self.status_label.configure(
-                        text=f"Hoofdstream fout: {e}", text_color=COLORS["error"]
+                    self.after(0, lambda error_msg=e: self.status_label.configure(
+                        text=f"Hoofdstream fout: {error_msg}", text_color=COLORS["error"]
                     ))
 
             if self.include_tolk.get():
@@ -235,8 +235,8 @@ class ArchiveFrame(ctk.CTkFrame):
                 try:
                     found["tolk"] = acc.get_all_old_broadcasts(days)
                 except Exception as e:
-                    self.after(0, lambda: self.status_label.configure(
-                        text=f"Tolkstream fout: {e}", text_color=COLORS["error"]
+                    self.after(0, lambda error_msg=e: self.status_label.configure(
+                        text=f"Tolkstream fout: {error_msg}", text_color=COLORS["error"]
                     ))
 
             self.found_broadcasts = found

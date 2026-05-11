@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 
+APP_VERSION = "1.1.0"
+
 DEFAULT_SETTINGS = {
     "app": {
         "theme": "dark",

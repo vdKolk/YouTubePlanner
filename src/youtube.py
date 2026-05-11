@@ -227,11 +227,10 @@ class YouTubeAccount:
     ) -> dict:
         """Haal broadcasts op"""
         if not self.service:
-            return {"items": []}
+            raise RuntimeError(f"Niet ingelogd voor account {self.name}. Ga naar Instellingen.")
         try:
             params = {
                 "part": "snippet,status,contentDetails",
-                "mine": True,
                 "maxResults": max_results,
                 "broadcastStatus": broadcast_status,
             }
@@ -241,7 +240,7 @@ class YouTubeAccount:
             return self.service.liveBroadcasts().list(**params).execute()
         except HttpError as e:
             print(f"Fout bij ophalen broadcasts: {e}")
-            return {"items": []}
+            raise RuntimeError(f"Fout bij ophalen van YouTube-lijst: {e.reason}")
 
     def get_all_old_broadcasts(self, days: int = 180) -> list:
         """Haal alle broadcasts op die ouder zijn dan X dagen"""
@@ -251,7 +250,7 @@ class YouTubeAccount:
 
         while True:
             resp = self.get_broadcasts(
-                broadcast_status="completed",
+                broadcast_status="all",
                 max_results=50,
                 page_token=page_token,
             )
@@ -259,18 +258,23 @@ class YouTubeAccount:
                 snippet = item.get("snippet", {})
                 status = item.get("status", {})
 
-                # Sla al verborgen/niet-gelistede items over
+                # Sla items over die al op 'private' of 'unlisted' (verborgen) staan
                 if status.get("privacyStatus") in ("private", "unlisted"):
                     continue
 
-                start_time = snippet.get("actualStartTime") or snippet.get("scheduledStartTime")
-                if start_time:
-                    try:
-                        dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
-                        if dt < cutoff:
-                            old_broadcasts.append(item)
-                    except Exception:
-                        pass
+                # Probeer verschillende datumvelden (fallback naar publishedAt voor oude streams)
+                dt = None
+                for field in ["actualStartTime", "scheduledStartTime", "publishedAt"]:
+                    val = snippet.get(field)
+                    if val:
+                        try:
+                            dt = datetime.fromisoformat(val.replace("Z", "+00:00"))
+                            break
+                        except:
+                            continue
+
+                if dt and dt < cutoff:
+                    old_broadcasts.append(item)
 
             page_token = resp.get("nextPageToken")
             if not page_token:
